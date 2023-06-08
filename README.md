@@ -8,7 +8,7 @@ Create a cattle container that uses a systemd unit template to create the latest
 
 2. I have added a bind mount to the host to share with this container. This service will create a shared directory on host at **~/Public/fedora-toolbx/project1** assuming you named the toolbx project1. This directory will be persistent even if you delete the toolbx container.
 
-3. If you want to modify the service unit, remember to reload the daemon, as discribed below.
+3. If you want to modify the service unit, remember to reload the daemon, as described below.
 
 ## Installation
 1. Place the service unit file in **${XDG_CONFIG_HOME}/systemd/user** directory
