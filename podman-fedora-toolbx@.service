@@ -1,0 +1,73 @@
+# copyleft 2022 richiedaze
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# fedora-toolbx unit template
+
+[Unit]
+Description=create a customizable toolbx container 
+
+[Service]
+Type=oneshot
+
+# Check for the podman executable
+ExecStartPre=test -x /usr/bin/podman
+
+# Check for the toolbox executable
+ExecStartPre=test -x /usr/bin/toolbox
+
+# Clone /etc/skel directory into ~/config
+# as a basic skeleton for a home directory
+ExecStartPre=bash -c ' \
+    test -d %E/skel || \
+    cp -r /etc/skel %E'
+
+# Create a shared directory to host
+ExecStartPre=mkdir --parents \
+    %h/Public/fedora-toolbx/%i
+
+# Construct a toolbox container attached to the pod
+ExecStart=-podman run --detach \
+    --dns none \
+    --env TOOLBOX_PATH=/usr/bin/toolbox \
+    --env TOOLBX_NAME=fedora-toolbx-%i \
+    --env XDG_RUNTIME_DIR=%t \
+    --hostname fedora-toolbx \
+    --ipc host \
+    --label com.github.containers.toolbox=true \
+    --log-level error \
+    --mount 'type=devpts,destination=/dev/pts' \
+    --name fedora-toolbx-%i \
+    --network host \
+    --no-hosts \
+    --pid host \
+    --privileged \
+    --security-opt label=disable \
+    --ulimit host \
+    --user root:root \
+    --userns keep-id \
+    --volume /:/run/host:rslave \
+    --volume /dev:/dev:rslave \
+    --volume /run/user/%U:/run/user/%U \
+    --volume /run/media:/run/media:rslave \
+    --volume /run/.heim_org.h5l.kcm-socket:/run/.heim_org.h5l.kcm-socket \
+    --volume /run/avahi-daemon/socket:/run/avahi-daemon/socket \
+    --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
+    --volume /run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm \
+    --volume /etc/profile.d/toolbox.sh:/etc/profile.d/toolbox.sh:ro \
+    --volume /usr/bin/toolbox:/usr/bin/toolbox:ro \
+    --volume /var/home/%u/.config/skel:/var/home/%u:O \
+    --volume /var/home/%u/Public/fedora-toolbx:/var/home/%u/Public:rw \
+    --workdir /var/home/%u registry.fedoraproject.org/fedora-toolbox:latest \
+toolbox init-container \
+    --log-level debug \
+    --home /var/home/%u \
+    --shell %s \
+    --user %u \
+    --uid %U \
+    --gid %U \
+    --monitor-host \
+    --home-link \
+    --media-link \
+    --mnt-link
+    
+[Install]
+WantedBy=multi-user.target
